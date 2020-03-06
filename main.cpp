@@ -14,6 +14,8 @@ using namespace std;
 
 int main( void ) {
     
+    srand( time(NULL) );
+    
     /*
     Math_Parser Parser_fx_1;
     Math_Parser Parser_fx_2;
@@ -33,12 +35,17 @@ int main( void ) {
      */
     
     Individual I1;
+    Individual I2;
     
     I1.Genotype.push_back("0011111111101111111101111100111011011001000101101000011100101011");
     I1.Genotype.push_back("0100000001011111110010000100000000111101110111011011000100100001");
+    I2.Genotype.push_back("0100000001011111110010000100000000111101110111011011000100100001");
+    I2.Genotype.push_back("0011111111101111111101111100111011011001000101101000011100101011");
     
     Individual_Genotype_Coding(&I1);
-    Individual_Fenotype_Decoding(&I1);
+    //Individual_Fenotype_Decoding(&I1);
+    
+    Individual_Crossing(I1, I2);
     
     return 0;
 }
