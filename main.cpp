@@ -45,7 +45,8 @@ int main( void ) {
     Individual_Genotype_Coding(&I1);
     //Individual_Fenotype_Decoding(&I1);
     
-    Individual_Crossing(I1, I2);
+    //Individual_Crossing(I1, I2);
+    Individual_Mutation(&I1);
     
     return 0;
 }

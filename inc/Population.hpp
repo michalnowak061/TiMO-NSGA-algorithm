@@ -20,9 +20,9 @@ using namespace std;
 
 typedef struct {
     
-    vector<string> Genotype;    // <- decoded binary representation of Fenotype
-    vector<double> Fenotype;    // <- encoded representation of Genotype
-    VARIABLE_TYPE Adaptation;   // <- value of the adaptation function
+    vector<string>        Genotype;    // <- decoded binary representation of Fenotype
+    vector<VARIABLE_TYPE> Fenotype;    // <- encoded representation of Genotype
+    VARIABLE_TYPE         Adaptation;  // <- value of the adaptation function
     
 } Individual;
 

@@ -90,17 +90,45 @@ Individual Individual_Crossing(Individual i1, Individual i2) {
         New_I.Genotype.push_back(temp);
     }
     
-    //cout << Genotype1_Temp << endl;
-    //cout << Genotype2_Temp << endl;
-    //cout << New_Genotype_Temp << endl;
-    //cout << Rand_Temp << endl;
-    
     return New_I;
 }
 
 // --------------------------------------------------------------------
 
-void Individual_Mutation(Individual *i1);
+void Individual_Mutation(Individual *i1) {
+    
+    Individual New_I;
+    string Genotype1_Temp;
+    
+    int Rand_Temp = rand() % ( i1->Genotype.size()  * 64 );
+    
+    for(int i = 0; i < i1->Genotype.size(); ++i) {
+        
+        Genotype1_Temp += i1->Genotype[i];
+    }
+    
+    for (int i = 0; i < Genotype1_Temp.length() / 64; i++) {
+        
+        string temp;
+        
+        for (int j = i * (int)(Genotype1_Temp.length()); j < Genotype1_Temp.length(); ++j) {
+            
+            if(j == Rand_Temp) {
+                
+                if(Genotype1_Temp[j] == '0') temp += "1";
+                else temp += "0";
+            }
+            else {
+             
+                temp += Genotype1_Temp[j];
+            }
+        }
+        
+        New_I.Genotype.push_back(temp);
+    }
+    
+    i1->Genotype = New_I.Genotype;
+}
 
 // --------------------------------------------------------------------
 
