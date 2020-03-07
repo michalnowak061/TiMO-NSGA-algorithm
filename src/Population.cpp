@@ -10,140 +10,119 @@
 
 // --------------------------------------------------------------------
 
-void Individual_Genotype_Coding(Individual *i1) {
+Population::Population(int work_size, int p_size, int max_g_number, int c_probability, int m_probability) {
     
-    string s = "";
-    unsigned long long x = 0;
-    double d = 0;
+    Work_Size = work_size;
     
-    for(int i = 0; i < i1->Genotype.size(); ++i) {
-        
-        s = i1->Genotype[i];
-        
-        for (string::const_iterator i = s.begin(); i != s.end(); ++i) {
-            
-            x = (x << 1) + (*i - '0');
-        }
-        
-        memcpy(&d, &x, 8);
-        
-        i1->Fenotype.push_back(d);
-        //cout << i1->Fenotype[i] << endl;
-    }
-}
-
-// --------------------------------------------------------------------
-
-void Individual_Fenotype_Decoding(Individual *i1) {
+    Population_Size = p_size;
+    Max_Generation_Number = max_g_number;
     
-    string s = "";
-    double d = 0;
-    
-    for (int i =0; i < i1->Fenotype.size(); ++i) {
-        
-        d = i1->Fenotype[i];
-        s = bitset<sizeof d * 8>( *(long unsigned int*)(&d) ).to_string();
-        
-        i1->Genotype.push_back(s);
-        //cout << i1->Genotype[i] << endl;
-    }
-}
-
-// --------------------------------------------------------------------
-
-Individual Individual_Crossing(Individual i1, Individual i2) {
-    
-    Individual New_I;
-    string Genotype1_Temp;
-    string Genotype2_Temp;
-    string New_Genotype_Temp;
-    
-    int Rand_Temp = rand() % ( i1.Genotype.size()  * 64 );
-    
-    for(int i = 0; i < i1.Genotype.size() && i < i2.Genotype.size(); ++i) {
-        
-        Genotype1_Temp += i1.Genotype[i];
-        Genotype2_Temp += i2.Genotype[i];
-    }
-    
-    for(int i = 0; i < Genotype1_Temp.length() && i < Genotype2_Temp.length(); ++i) {
-        
-        if (i < Rand_Temp) {
-            
-            New_Genotype_Temp += Genotype1_Temp[i];
-        }
-        else {
-            
-            New_Genotype_Temp += Genotype2_Temp[i];
-        }
-    }
-    
-    for (int i = 0; i < New_Genotype_Temp.length() / 64; i++) {
-        
-        string temp;
-        
-        for (int j = i * (int)(New_Genotype_Temp.length()); j < New_Genotype_Temp.length(); ++j) {
-            
-            temp += New_Genotype_Temp[j];
-        }
-        
-        New_I.Genotype.push_back(temp);
-    }
-    
-    return New_I;
-}
-
-// --------------------------------------------------------------------
-
-void Individual_Mutation(Individual *i1) {
-    
-    Individual New_I;
-    string Genotype1_Temp;
-    
-    int Rand_Temp = rand() % ( i1->Genotype.size()  * 64 );
-    
-    for(int i = 0; i < i1->Genotype.size(); ++i) {
-        
-        Genotype1_Temp += i1->Genotype[i];
-    }
-    
-    for (int i = 0; i < Genotype1_Temp.length() / 64; i++) {
-        
-        string temp;
-        
-        for (int j = i * (int)(Genotype1_Temp.length()); j < Genotype1_Temp.length(); ++j) {
-            
-            if(j == Rand_Temp) {
-                
-                if(Genotype1_Temp[j] == '0') temp += "1";
-                else temp += "0";
-            }
-            else {
-             
-                temp += Genotype1_Temp[j];
-            }
-        }
-        
-        New_I.Genotype.push_back(temp);
-    }
-    
-    i1->Genotype = New_I.Genotype;
-}
-
-// --------------------------------------------------------------------
-
-void Individual_Adaptation(Individual *i1);
-
-// --------------------------------------------------------------------
-
-Population::Population() {
-    
+    Crossing_Probability = c_probability;
+    Mutation_Probability = m_probability;
 }
 
 // --------------------------------------------------------------------
 
 Population::~Population() {
     
+    Individuals_List.clear();
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Init() {
+    
+    for (int i = 0; i < Population_Size; ++i) {
+        
+        Individual I_Temp;
+        
+        for (int j = 0; j < Work_Size; j++) {
+            
+            string Genotype_Temp;
+            
+            for (int k = 0; k < 8 * sizeof(VARIABLE_TYPE); ++k) {
+                
+                int Rand_Temp = rand() % 2;
+                Genotype_Temp += to_string(Rand_Temp);
+            }
+            
+            I_Temp.Genotype.push_back(Genotype_Temp);
+        }
+        
+        Individual_Genotype_Coding(&I_Temp);
+        Individuals_List.push_back(I_Temp);
+    }
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Add_Adaptation_Function(string adaptation_function) {
+    
+    Adaptation_Functions_List.push_back(adaptation_function);
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Adaptation() {
+    
+    for(int i = 0; i < Individuals_List.size(); ++i) {
+        
+        VARIABLE_TYPE Temp_Adaptation = 0;
+        
+        for(int j = 0; j < Adaptation_Functions_List.size(); ++j) {
+            
+            Individuals_List[i].Adaptation.push_back( Individual_Adaptation(Individuals_List[i], Adaptation_Functions_List[j]) );
+            Temp_Adaptation += Individuals_List[i].Adaptation[j];
+            //cout << "Wartosc f(x)_" + to_string(j) << ": " << Individual_Adaptation(Individuals_List[i], Adaptation_Functions_List[j]) << endl;
+        }
+        
+        Individuals_List[i].Adaptation_Factor = Temp_Adaptation / Work_Size;
+    }
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Crossing() {
+    
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Mutation() {
+    
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Selection() {
+    
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Print() {
+    
+    cout << "------------- POPULACJA -------------" << endl;
+    cout << "Rozmiar populacji: " << Population_Size << endl;
+    cout << "Ilosc pokoleń: " << Generation_Number << endl;
+    cout << "------------- OSOBNIKI -------------" << endl;
+    
+    for(int i = 0; i < Individuals_List.size(); ++i) {
+        
+        Individual I_Temp = Individuals_List[i];
+        
+        cout << "Osobnik: " << i << endl;
+        
+        for (int j = 0; j < I_Temp.Genotype.size() && j < I_Temp.Fenotype.size(); ++j) {
+            
+            cout << "x_" << j << ": "<< I_Temp.Genotype[j] << " / " << I_Temp.Fenotype[j] <<endl;
+        }
+        
+        for(int k = 0; k < Adaptation_Functions_List.size(); ++k) {
+            
+            cout << "f(x)_" + to_string(k) << "[" << Adaptation_Functions_List[k] << "]" << ": " << Individuals_List[i].Adaptation[k] << endl;
+        }
+    }
 }
 
 // --------------------------------------------------------------------

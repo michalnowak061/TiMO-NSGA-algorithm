@@ -32,6 +32,9 @@ void Math_Parser::Math_Parser_Add_Expression(string expression) {
 void Math_Parser::Math_Parser_Clear_Expression() {
     
     Expression_String.clear();
+    Number_Of_Variables = 0;
+    //Symbol_Table.clear();
+    //Parser.init_precompilation();
 }
 
 // --------------------------------------------------------------------
@@ -55,6 +58,10 @@ void Math_Parser::Math_Parser_Add_Variable(string variable_key, VARIABLE_TYPE va
 
 void Math_Parser::Math_Parser_Calculate() {
     
+    exprtk::symbol_table<VARIABLE_TYPE> Symbol_Table;
+    exprtk::expression<VARIABLE_TYPE>   Expression;
+    exprtk::parser<VARIABLE_TYPE>       Parser;
+    
     for(int i = 0; i < Number_Of_Variables; ++i) {
         
         Symbol_Table.add_variable( Variable_Key_List[i], Variable_Value_List[i] );
@@ -62,6 +69,7 @@ void Math_Parser::Math_Parser_Calculate() {
     
     Variable_Key_List.clear();
     Variable_Value_List.clear();
+    Number_Of_Variables = 0;
     
     Expression.register_symbol_table(Symbol_Table);
     Parser.compile(Expression_String,Expression);

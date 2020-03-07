@@ -13,42 +13,39 @@
 #include <iostream>
 #include <vector>
 #include <cstdlib>
-
-#define VARIABLE_TYPE double
+#include "Individual.hpp"
 
 using namespace std;
-
-typedef struct {
-    
-    vector<string>        Genotype;    // <- decoded binary representation of Fenotype
-    vector<VARIABLE_TYPE> Fenotype;    // <- encoded representation of Genotype
-    VARIABLE_TYPE         Adaptation;  // <- value of the adaptation function
-    
-} Individual;
-
-void Individual_Genotype_Coding(Individual *i1);
-void Individual_Fenotype_Decoding(Individual *i1);
-
-Individual Individual_Crossing(Individual i1, Individual i2);
-void Individual_Mutation(Individual *i1);
-
-void Individual_Adaptation(Individual *i1);
 
 class Population {
 
 private:
     
     int Population_Size;
-    int Max_Population_Size;
+    int Generation_Number;
+    int Max_Generation_Number;
     
     int Crossing_Probability;
     int Mutation_Probability;
     
+    vector<Individual> Individuals_List;
+    vector<string> Adaptation_Functions_List;
+    
+    int Work_Size;
+    
 protected:
     
 public:
-    Population();
+    Population(int work_size, int p_size, int max_g_number, int c_probability, int m_probability);
     ~Population();
+    
+    void Population_Init();
+    void Population_Add_Adaptation_Function(string adaptation_function);
+    void Population_Adaptation();
+    void Population_Crossing();
+    void Population_Mutation();
+    void Population_Selection();
+    void Population_Print();
 };
 
 #endif /* Population_hpp */

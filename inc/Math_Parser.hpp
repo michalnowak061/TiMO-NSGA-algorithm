@@ -21,9 +21,9 @@ class Math_Parser {
 
 private:
     
-    exprtk::symbol_table<VARIABLE_TYPE> Symbol_Table;
-    exprtk::expression<VARIABLE_TYPE>   Expression;
-    exprtk::parser<VARIABLE_TYPE>       Parser;
+    //exprtk::symbol_table<VARIABLE_TYPE> Symbol_Table;
+    //exprtk::expression<VARIABLE_TYPE>   Expression;
+    //exprtk::parser<VARIABLE_TYPE>       Parser;
     
     string Expression_String;
     VARIABLE_TYPE Expression_Value;
