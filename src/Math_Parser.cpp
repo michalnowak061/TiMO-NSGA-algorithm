@@ -33,8 +33,6 @@ void Math_Parser::Math_Parser_Clear_Expression() {
     
     Expression_String.clear();
     Number_Of_Variables = 0;
-    //Symbol_Table.clear();
-    //Parser.init_precompilation();
 }
 
 // --------------------------------------------------------------------

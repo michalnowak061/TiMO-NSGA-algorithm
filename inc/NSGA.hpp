@@ -10,5 +10,8 @@
 #define NSGA_hpp
 
 #include <stdio.h>
+#include "Population.hpp"
+
+void NSGA_Algorithm(int n, int N, int T, int P_c, int P_m);
 
 #endif /* NSGA_hpp */

@@ -7,8 +7,7 @@
 //
 
 #include <iostream>
-#include "Math_Parser.hpp"
-#include "Population.hpp"
+#include "HLGA.hpp"
 
 using namespace std;
 
@@ -16,21 +15,13 @@ int main( void ) {
     
     srand( (unsigned int)( time(NULL) ) );
     
+    int n = 1;
+    int N = 10000;
+    int T = 2;
+    int P_c = 70;
+    int P_m = 1;
     
-    Population P1(5,5,0,0,0);
-    
-    P1.Population_Init();
-    
-    P1.Population_Add_Adaptation_Function("x_0^2");
-    P1.Population_Add_Adaptation_Function("x_1");
-    P1.Population_Add_Adaptation_Function("x_2");
-    P1.Population_Add_Adaptation_Function("x_3");
-    P1.Population_Add_Adaptation_Function("x_4");
-    
-    P1.Population_Adaptation();
-    
-    P1.Population_Print();
-    
+    HLGA_Algorithm(n, N, T, P_c, P_m);
     
     return 0;
 }

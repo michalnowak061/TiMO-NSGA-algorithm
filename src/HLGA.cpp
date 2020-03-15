@@ -1,49 +1,20 @@
 //
-//  NSGA.cpp
+//  HLGA.cpp
 //  TiMO_Projekt
 //
-//  Created by Michal_Nowak & Kacper_Stenka on 08/03/2020.
+//  Created by Michal_Nowak & Kacper_Stenka on 15/03/2020.
 //  Copyright © 2020 Michal_Nowak & Kacper_Stenka. All rights reserved.
 //
 
-#include "NSGA.hpp"
+#include "HLGA.hpp"
 
-double NSGA_Split_Function(double alpha, double q_share, Individual ii, Individual jj) {
-    
-    double d_ij = 0;
-    double sd_ij = 0;
-    
-    // Step 1:
-    for(int i = 0; i < ii.Fenotypes.size() && i < jj.Fenotypes.size(); ++i) {
-        
-        d_ij += pow( ( jj.Fenotypes[i] - ii.Fenotypes[i] ), 2);
-    }
-    
-    d_ij = sqrt( d_ij );
-    
-    // Step 2:
-    if( d_ij < q_share ) {
-        
-        sd_ij = 1 - pow( (d_ij / q_share), alpha);
-    }
-    else {
-        
-        sd_ij = 0;
-    }
-    
-    cout << sd_ij << endl;
-    
-    return sd_ij;
-}
-
-Population NSGA_Fitness(Population p) {
+Population HLGA_Fitness(Population p) {
     
     Population New_Population = p;
     
     for(int i = 0; i < p.Population_Size; ++i) {
         
         VARIABLE_TYPE F_sum = 0;
-        //Individual I_Temp = Individual_Initialization(0);
         
         for(int j = 0; j < p.Goal_Functions_Number; ++j) {
             
@@ -53,7 +24,7 @@ Population NSGA_Fitness(Population p) {
             VARIABLE_TYPE adaptation = Individual_Adaptation(I_Temp, Goal_Function_Temp);
             New_Population.Population_Set_Adaptation(adaptation, i);
             
-            F_sum +=  (j+1) * adaptation;
+            F_sum += (j+1) * adaptation;
         }
         
         VARIABLE_TYPE Fitness_Temp = F_sum / p.Goal_Functions_Number;
@@ -63,7 +34,7 @@ Population NSGA_Fitness(Population p) {
     return New_Population;
 }
 
-void NSGA_Algorithm(int n, int N, int T, int P_c, int P_m) {
+void HLGA_Algorithm(int n, int N, int T, int P_c, int P_m) {
     
     Population Pt(n,N,P_c,P_m);
     Population P0(n,N,P_c,P_m);
@@ -72,25 +43,26 @@ void NSGA_Algorithm(int n, int N, int T, int P_c, int P_m) {
     Population P3(n,N,P_c,P_m);
     
     // Step 1: Inititalization
-    Pt.Population_Initialization(0, 4);
-    P0.Population_Initialization(0, 4);
-    P1.Population_Initialization(0, 4);
-    P2.Population_Initialization(0, 4);
-    P3.Population_Initialization(0, 4);
+    Pt.Population_Initialization(-4, 4);
+    P0.Population_Initialization(0, 1);
+    P1.Population_Initialization(0, 1);
+    P2.Population_Initialization(0, 1);
+    P3.Population_Initialization(0, 1);
     
-    P0.Population_Set_Goal_Function("x_0^2");
-    P0.Population_Set_Goal_Function("(x_0-2)^2");
+    P0.Population_Set_Goal_Function("2*x_0^4-6*x_0^2-8");
     
-    P0.Population_Set_Search_Domain(0, 4);
+    P0.Population_Set_Search_Domain(-4, 4);
     
     Pt = P0;
+    
+    //Pt.Population_Print();
     
     int t = 0;
     
     while(1) {
         
         // Step 2: Adaptation
-        Pt = NSGA_Fitness(Pt);
+        Pt = HLGA_Fitness(Pt);
         
         // Step 3: Selection
         P1 = Pt.Population_Selection();
