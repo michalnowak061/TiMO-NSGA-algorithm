@@ -188,8 +188,6 @@ Individual Individual_Mutation(Individual i1, int m_probability, vector<VARIABLE
         New_I.Genotypes.push_back(genotype);
         Individual_Genotypes_Decoding(&New_I, search_domain_min, search_domain_max);
     }
-
-    //Individual_Genotypes_Decoding(&New_I, search_domain_min, search_domain_max);
     
     return New_I;
 }
@@ -218,10 +216,25 @@ VARIABLE_TYPE Individual_Adaptation(Individual i1, string adaptation_function) {
 
 // --------------------------------------------------------------------
 
+bool operator >= (Individual i1, Individual i2) {
+
+    for(int i = 0; i < i1.Goals.size() && i < i2.Goals.size(); ++i){
+     
+        if( i1.Goals[i] < i2.Goals[i] ) {
+            
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// --------------------------------------------------------------------
+
 Population::Population(int work_size,
-                             int population_size,
-                             int crossing_probability,
-                             int mutation_probability) {
+                       int population_size,
+                       int crossing_probability,
+                       int mutation_probability) {
     
     Work_Size = work_size;
     Population_Size = population_size;
@@ -236,6 +249,10 @@ Population::Population(int work_size,
 
 Population::~Population() {
     
+    Individuals.clear();
+    Search_Domain_MIN.clear();
+    Search_Domain_MAX.clear();
+    Goal_Functions.clear();
 }
 
 // --------------------------------------------------------------------
@@ -416,74 +433,98 @@ Population Population::Population_Selection() {
 
 Population Population::Population_Get_Non_Dominated() {
     
-    Population New_Population(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
+    // Variables:
+    Population Non_Dominated(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
     
-    New_Population.Goal_Functions        = Goal_Functions;
-    New_Population.Goal_Functions_Number = Goal_Functions_Number;
-    New_Population.Search_Domain_MIN     = Search_Domain_MIN;
-    New_Population.Search_Domain_MAX     = Search_Domain_MAX;
+    Non_Dominated.Goal_Functions        = Goal_Functions;
+    Non_Dominated.Goal_Functions_Number = Goal_Functions_Number;
+    Non_Dominated.Search_Domain_MIN     = Search_Domain_MIN;
+    Non_Dominated.Search_Domain_MAX     = Search_Domain_MAX;
     
-    int Population_S = (int)( Individuals.size() );
+    Non_Dominated.Individuals = Individuals;
     
-    int Non_Dominated = 0;
-    
-    for(int i = 0; i < Population_S; ++i) {
+    // Step 1:
+    for(int i = 0; i < Non_Dominated.Individuals.size(); ++i) {
         
-        for(int j = 0; j < Individuals[i].Goals.size(); ++j) {
+        Individual I_Temp1 = Non_Dominated.Individuals[i];
+        
+        for(int j = i - 1; j < Non_Dominated.Individuals.size(); ++j) {
             
-            Non_Dominated = 1;
+            Individual I_Temp2 = Non_Dominated.Individuals[j];
             
-            VARIABLE_TYPE x = Individuals[i].Goals[j];
-            
-            for(int k = 0; k < Population_S; ++k) {
+            if( I_Temp2 >= I_Temp1 ) {
                 
-                VARIABLE_TYPE y = Individuals[k].Goals[j];
-                
-                cout << x << " >= " << y << endl;
-                
-                if(x >= y) {
-                    
-                    Non_Dominated = 0;
-                    break;
-                }
-            }
-            
-            cout << Non_Dominated << endl;
-            
-            if(Non_Dominated == 1) {
-                
-                New_Population.Individuals.push_back(Individuals[i]);
+                Non_Dominated.Individuals.erase(Non_Dominated.Individuals.begin() + j);
             }
         }
     }
     
-    return New_Population;
+    return Non_Dominated;
 }
 
 // --------------------------------------------------------------------
 
-void Population::Population_Save_To_File() {
+Population Population::Population_Get_Dominated() {
     
-    fstream file("data.txt", std::ios::out | std::ios::trunc);
+    // Variables:
+    Population Dominated(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
+    Dominated.Goal_Functions        = Goal_Functions;
+    Dominated.Goal_Functions_Number = Goal_Functions_Number;
+    Dominated.Search_Domain_MIN     = Search_Domain_MIN;
+    Dominated.Search_Domain_MAX     = Search_Domain_MAX;
+    
+    Population Temp(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
+    Temp.Goal_Functions        = Goal_Functions;
+    Temp.Goal_Functions_Number = Goal_Functions_Number;
+    Temp.Search_Domain_MIN     = Search_Domain_MIN;
+    Temp.Search_Domain_MAX     = Search_Domain_MAX;
+    
+    Temp.Individuals = Individuals;
+    
+    // Step 1:
+    for(int i = 0; i < Temp.Individuals.size(); ++i) {
+        
+        Individual I_Temp1 = Temp.Individuals[i];
+        
+        for(int j = i - 1; j < Temp.Individuals.size(); ++j) {
+            
+            Individual I_Temp2 = Temp.Individuals[j];
+            
+            if( I_Temp2 >= I_Temp1 ) {
+                
+                Temp.Individuals.erase(Temp.Individuals.begin() + j);
+                Dominated.Individuals.push_back(I_Temp2);
+            }
+        }
+    }
+    
+    return Dominated;
+}
+
+// --------------------------------------------------------------------
+
+void Population::Population_Save_To_File(string file_name) {
+    
+    fstream file(file_name, std::ios::out | std::ios::trunc);
 
     if( file.good() ) {
         
         file << "T \t";
         
-        for(int i = 0; i < Individuals[i].Goals.size(); ++i) {
+        for(int i = 0; i < Goal_Functions_Number; ++i) {
             
             file << "f(x)_" + to_string(i) + "\t";
         }
         
         file << "\n";
 
-        for(int i = 0; i < Population_Size; i++) {
+        for(int i = 0; i < Individuals.size(); i++) {
             
             string data;
             
             data += to_string(i) + "\t";
             
-            for(int j = 0; j < Individuals[i].Goals.size(); ++j) {
+            for(int j = 0; j < Goal_Functions_Number; ++j) {
                 
                 data += to_string( Individuals[i].Goals[j] ) + "\t";
             }
@@ -508,19 +549,16 @@ void Population::Population_Print() {
     
     cout << "--------------------------------------- POPULACJA ---------------------------------------" << endl;
     cout << "Rozmiar zadania: " << Work_Size << endl;
-    cout << "Rozmiar populacji: " << Population_Size << endl;
+    cout << "Rozmiar populacji: " << Individuals.size() << endl;
     cout << "Prawdopodobienstwo krzyzowania: " << Crossing_Probability << " %" << endl;
     cout << "Prawdopodobienstwo mutacji: " << Mutation_Probability << " %" << endl;
     cout << "--------------------------------------- OSOBNIKI ----------------------------------------" << endl;
     
-    for(int i = 0; i < Population_Size; ++i) {
+    for(int i = 0; i < Individuals.size(); ++i) {
         
         Individual I_Temp = Individuals[i];
         
         cout << "Osobnik: " << i << endl;
-        
-        cout << "Rozmiar genotypu: " << I_Temp.Genotypes.size() << endl;
-        cout << "Rozmiar fenotypu: " << I_Temp.Fenotypes.size() << endl;
         
         for (int j = 0; j < I_Temp.Genotypes.size() && j < I_Temp.Fenotypes.size(); ++j) {
             

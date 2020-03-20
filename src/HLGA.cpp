@@ -34,28 +34,15 @@ Population HLGA_Fitness(Population p) {
     return New_Population;
 }
 
-void HLGA_Algorithm(int n, int N, int T, int P_c, int P_m) {
-    
-    Population Pt(n,N,P_c,P_m);
-    Population P0(n,N,P_c,P_m);
-    Population P1(n,N,P_c,P_m);
-    Population P2(n,N,P_c,P_m);
-    Population P3(n,N,P_c,P_m);
+// --------------------------------------------------------------------
+
+Population HLGA_Algorithm(Population P0, int T) {
     
     // Step 1: Inititalization
-    Pt.Population_Initialization(-4, 4);
-    P0.Population_Initialization(0, 1);
-    P1.Population_Initialization(0, 1);
-    P2.Population_Initialization(0, 1);
-    P3.Population_Initialization(0, 1);
-    
-    P0.Population_Set_Goal_Function("2*x_0^4-6*x_0^2-8");
-    
-    P0.Population_Set_Search_Domain(-4, 4);
-    
-    Pt = P0;
-    
-    //Pt.Population_Print();
+    Population Pt = P0;
+    Population P1 = P0;
+    Population P2 = P0;
+    Population P3 = P0;
     
     int t = 0;
     
@@ -81,7 +68,14 @@ void HLGA_Algorithm(int n, int N, int T, int P_c, int P_m) {
     }
     
     // Step 6: End
-    //Pt = Pt.Population_Get_Non_Dominated();
-    Pt.Population_Save_To_File();
-    Pt.Population_Print();
+    Population A1 = Pt.Population_Get_Non_Dominated();
+    A1.Population_Save_To_File("nondom.csv");
+    
+    Population A2 = Pt.Population_Get_Dominated();
+    A2.Population_Save_To_File("dom.csv");
+    //Population A = P1;
+    
+    return A1;
 }
+
+// --------------------------------------------------------------------

@@ -12,6 +12,6 @@
 #include <stdio.h>
 #include "Population.hpp"
 
-void HLGA_Algorithm(int n, int N, int T, int P_c, int P_m);
+Population HLGA_Algorithm(Population P0, int T);
 
 #endif /* HLGA_hpp */

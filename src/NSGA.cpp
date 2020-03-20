@@ -110,6 +110,6 @@ void NSGA_Algorithm(int n, int N, int T, int P_c, int P_m) {
     
     // Step 6: End
     //Pt = Pt.Population_Get_Non_Dominated();
-    Pt.Population_Save_To_File();
-    Pt.Population_Print();
+    //Pt.Population_Save_To_File();
+    //Pt.Population_Print();
 }

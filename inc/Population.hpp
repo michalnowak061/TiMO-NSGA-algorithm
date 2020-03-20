@@ -40,6 +40,8 @@ Individual  Individual_Mutation(Individual i1, int m_probability, vector<VARIABL
 
 VARIABLE_TYPE Individual_Adaptation(Individual i1, string adaptation_function);
 
+bool operator <= (const Individual i1, const Individual i2);
+
 // --------------------------------------------------------------------
 
 class Population {
@@ -82,6 +84,7 @@ public:
     Population Population_Selection();
     
     Population Population_Get_Non_Dominated();
+    Population Population_Get_Dominated();
     
     void Population_Set_Search_Domain(VARIABLE_TYPE min, VARIABLE_TYPE max);
     
@@ -95,7 +98,7 @@ public:
     
     void Population_Set_Fitness(VARIABLE_TYPE fitness, int index);
     
-    void Population_Save_To_File();
+    void Population_Save_To_File(string file_name);
     void Population_Print();
 };
 
