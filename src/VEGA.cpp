@@ -1,51 +1,48 @@
 //
-//  NSGA.cpp
+//  VEGA.cpp
 //  TiMO_Projekt
 //
-//  Created by Michal_Nowak & Kacper_Stenka on 08/03/2020.
+//  Created by Michal on 22/03/2020.
 //  Copyright © 2020 Michal_Nowak & Kacper_Stenka. All rights reserved.
 //
 
-#include "NSGA.hpp"
+#include "VEGA.hpp"
 
-double NSGA_Split_Function(double alpha, double q_share, Individual ii, Individual jj) {
-    
-    double d_ij = 0;
-    double sd_ij = 0;
-    
-    // Step 1:
-    for(int i = 0; i < ii.Fenotypes.size() && i < jj.Fenotypes.size(); ++i) {
-        
-        d_ij += pow( ( jj.Fenotypes[i] - ii.Fenotypes[i] ), 2);
-    }
-    
-    d_ij = sqrt( d_ij );
-    
-    // Step 2:
-    if( d_ij < q_share ) {
-        
-        sd_ij = 1 - pow( (d_ij / q_share), alpha);
-    }
-    else {
-        
-        sd_ij = 0;
-    }
-    
-    cout << sd_ij << endl;
-    
-    return sd_ij;
-}
-
-Population NSGA_Fitness(Population p) {
+Population VEGA_Fitness_And_Selection(Population p) {
     
     Population New_Population = p;
+    New_Population.Population_Clear();
     
+    Population Population_Temp1 = p;
+    int k = p.Goal_Functions_Number;
     
+    for(int i = 0; i < k; ++i) {
+        
+        string Adaptation_Function = p.Population_Get_Goal_Function(i);
+        
+        for(int j = 0; j < p.Population_Get_Population_Size(); ++j) {
+            
+            Individual I_Temp = p.Population_Get_Individual(j);
+            double Fitness = Individual_Adaptation(I_Temp, Adaptation_Function);
+            
+            Population_Temp1.Population_Set_Fitness(Fitness, j);
+        }
+        
+        Population Population_Temp2 = Population_Temp1.Population_Selection();
+        
+        for(int j = 0; j < p.Population_Get_Population_Size() / k; ++j) {
+            
+            Individual I_Temp = Population_Temp2.Population_Get_Individual(j);
+            New_Population.Population_Set_Individual(I_Temp);
+        }
+    }
     
     return New_Population;
 }
 
-Population NSGA_Algorithm(Population P0, int T) {
+// --------------------------------------------------------------------
+
+Population VEGA_Algorithm(Population P0, int T) {
     
     // Step 1: Inititalization
     Population Pt = P0;
@@ -57,15 +54,14 @@ Population NSGA_Algorithm(Population P0, int T) {
     
     while(1) {
         
-        // Step 2: Adaptation
-        Pt = NSGA_Fitness(Pt);
+        // Step 2: Adaptation and Selection
+        P1 = VEGA_Fitness_And_Selection(Pt);
         
-        // Step 3: Selection
-        P1 = Pt.Population_Selection();
+        P1.Population_Print();
         
         if(t > T) break;
         
-        // Step 4: Crossing
+        // Step 3: Crossing
         P2 = P1.Population_Crossing();
         
         // Step 5: Mutation
@@ -104,8 +100,8 @@ Population NSGA_Algorithm(Population P0, int T) {
         }
     }
     
-    A_nondom.Population_Save_To_File("NSGA_Nondom");
-    A_dom.Population_Save_To_File("NSGA_Dom");
+    A_nondom.Population_Save_To_File("VEGA_Nondom");
+    A_dom.Population_Save_To_File("VEGA_Dom");
     
     A_nondom.Population_Print();
     
@@ -113,3 +109,5 @@ Population NSGA_Algorithm(Population P0, int T) {
     
     return A_nondom;
 }
+
+// --------------------------------------------------------------------

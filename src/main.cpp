@@ -9,6 +9,7 @@
 #include <iostream>
 #include "Test_Functions.h"
 #include "HLGA.hpp"
+#include "VEGA.hpp"
 
 using namespace std;
 
@@ -17,8 +18,8 @@ int main( void ) {
     srand( (unsigned int)( time(NULL) ) );
     
     int n = 1;
-    int N = 1000;
-    int T = 20;
+    int N = 50;
+    int T = 400;
     int P_c = 60;
     int P_m = 1;
     
@@ -28,11 +29,9 @@ int main( void ) {
     //Population_Set_Polonis_Function(&P0);
     //Constr_Ex_problem(&P0);
     //Fonseca_Fleming_Function(&P0, 2);
+    //Kursawe_Function(&P0);
     
-    Population A = HLGA_Algorithm(P0, T);
-    
-    //A.Population_Save_To_File("nondom.csv");
-    //A.Population_Print();
+    Population A = VEGA_Algorithm(P0, T);
     
     return 0;
 }

@@ -24,10 +24,10 @@ Population HLGA_Fitness(Population p) {
             VARIABLE_TYPE adaptation = Individual_Adaptation(I_Temp, Goal_Function_Temp);
             New_Population.Population_Set_Adaptation(adaptation, i);
             
-            F_sum += (j+1) * adaptation;
+            F_sum += adaptation;
         }
         
-        VARIABLE_TYPE Fitness_Temp = F_sum / p.Goal_Functions_Number;
+        VARIABLE_TYPE Fitness_Temp = F_sum / p.Population_Size;
         New_Population.Population_Set_Fitness(Fitness_Temp, i);
     }
     
@@ -40,9 +40,9 @@ Population HLGA_Algorithm(Population P0, int T) {
     
     // Step 1: Inititalization
     Population Pt = P0;
-    Population P1 = P0;
-    Population P2 = P0;
-    Population P3 = P0;
+    
+    //cout << endl << "####################################################### INICJALIZACJA #######################################################" << endl;
+    //Pt.Population_Print();
     
     int t = 0;
     
@@ -51,16 +51,28 @@ Population HLGA_Algorithm(Population P0, int T) {
         // Step 2: Adaptation
         Pt = HLGA_Fitness(Pt);
         
-        // Step 3: Selection
-        P1 = Pt.Population_Selection();
+        //cout << endl << "####################################################### ADAPTACJA #######################################################" << endl;
+        Pt.Population_Print();
         
         if(t > T) break;
         
+        // Step 3: Selection
+        Population P1 = Pt.Population_Selection();
+        
+        //cout << endl << "####################################################### SELEKCJA #######################################################" << endl;
+        //P1.Population_Print();
+        
         // Step 4: Crossing
-        P2 = P1.Population_Crossing();
+        Population P2 = P1.Population_Crossing();
+        
+        //cout << endl << "####################################################### KRZYZOWANIE #######################################################" << endl;
+        //P2.Population_Print();
         
         // Step 5: Mutation
-        P3 = P2.Population_Mutation();
+        Population P3 = P2.Population_Mutation();
+        
+        //cout << endl << "####################################################### MUTACJA #######################################################" << endl;
+        //P2.Population_Print();
         
         Pt = P3;
         
@@ -68,14 +80,12 @@ Population HLGA_Algorithm(Population P0, int T) {
     }
     
     // Step 6: End
-    Population A1 = Pt.Population_Get_Non_Dominated();
-    A1.Population_Save_To_File("nondom.csv");
+    Population A = Pt.Population_Get_Non_Dominated();
     
-    Population A2 = Pt.Population_Get_Dominated();
-    A2.Population_Save_To_File("dom.csv");
-    //Population A = P1;
+    cout << endl << "####################################################### POPULACJA A #######################################################" << endl;
+    A.Population_Print();
     
-    return A1;
+    return A;
 }
 
 // --------------------------------------------------------------------

@@ -27,6 +27,7 @@ typedef struct {
     vector<VARIABLE_TYPE> Fenotypes;
     vector<VARIABLE_TYPE> Goals;
     VARIABLE_TYPE         Fitness;
+    VARIABLE_TYPE         Drawn_Probability;
     
 } Individual;
 
@@ -100,6 +101,16 @@ public:
     
     void Population_Save_To_File(string file_name);
     void Population_Print();
+    
+    void Population_Clear() {
+        
+        Individuals.clear();
+    }
+    
+    int Population_Get_Population_Size() {
+        
+        return (int)( Individuals.size() );
+    }
 };
 
 // --------------------------------------------------------------------

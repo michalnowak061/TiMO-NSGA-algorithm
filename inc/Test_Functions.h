@@ -22,8 +22,8 @@ void Population_Set_Schaffers_N1_Function(Population *p) {
     p->Population_Set_Goal_Function(f1);
     p->Population_Set_Goal_Function(f2);
     
-    p->Population_Initialization(0, 4);
-    p->Population_Set_Search_Domain(0, 4);
+    p->Population_Initialization( numeric_limits<double>::min(), numeric_limits<double>::max() );
+    p->Population_Set_Search_Domain(-100000, 100000);
 }
 
 // --------------------------------------------------------------------
@@ -36,8 +36,7 @@ void Population_Set_Muratas_Function(Population *p) {
     p->Population_Set_Goal_Function(f1);
     p->Population_Set_Goal_Function(f2);
     
-    p->Population_Initialization(1, 4);
-    
+    p->Population_Initialization( numeric_limits<double>::min(), numeric_limits<double>::max() );
     p->Population_Set_Search_Domain(1, 4);
     p->Population_Set_Search_Domain(1, 2);
 }
@@ -51,16 +50,16 @@ void Population_Set_Polonis_Function(Population *p) {
     const string B1 = "0.5 * sin(x_0) - 2 * cos(x_0) + sin(x_1) - 1.5 * cos(x_1)";
     const string B2 = "1.5 * sin(x_0) - cos(x_0) + 2 * sin(x_1) - 0.5 * cos(x_1)";
     
-    const string f1 = "1 + (" + A1 + " - " + B1 + ")^2" + " + " + "(" + A2 + " - " + B2 + ")^2";
+    const string f1 = "1 + (" + A1 + " - " + "(" + B1 + ")" + ")^2" + " + " + "(" + A2 + " - " + "(" + B2 + ")" + ")^2";
     const string f2 = "(x_0 + 3)^2 + (x_1 + 1)^2";
     
     p->Population_Set_Goal_Function(f1);
     p->Population_Set_Goal_Function(f2);
     
-    p->Population_Initialization(-3.14, 3.14);
+    p->Population_Initialization( numeric_limits<double>::min(), numeric_limits<double>::max() );
     
-    p->Population_Set_Search_Domain(-3.14, 3.14);
-    p->Population_Set_Search_Domain(-3.14, 3.14);
+    p->Population_Set_Search_Domain(-M_PI, M_PI);
+    p->Population_Set_Search_Domain(-M_PI, M_PI);
 }
 
 // --------------------------------------------------------------------
@@ -73,7 +72,7 @@ void Constr_Ex_problem(Population *p) {
     p->Population_Set_Goal_Function(f1);
     p->Population_Set_Goal_Function(f2);
     
-    p->Population_Initialization(0, 5);
+    p->Population_Initialization( numeric_limits<double>::min(), numeric_limits<double>::max() );
     
     p->Population_Set_Search_Domain(0.1, 1);
     p->Population_Set_Search_Domain(0, 5);
@@ -107,7 +106,7 @@ void Fonseca_Fleming_Function(Population *p, int n) {
     p->Population_Set_Goal_Function(f1);
     p->Population_Set_Goal_Function(f2);
     
-    p->Population_Initialization(0, 4);
+    p->Population_Initialization( numeric_limits<double>::min(), numeric_limits<double>::max() );
     
     for(int i = 0; i < n; ++i) {
         
@@ -116,5 +115,40 @@ void Fonseca_Fleming_Function(Population *p, int n) {
 }
 
 // --------------------------------------------------------------------
+
+void Kursawe_Function(Population *p) {
+    
+    string sum_1;
+    string sum_2;
+    
+    for(int i = 0; i < 2; ++i) {
+        
+        sum_1 += " - 10 * exp(-0.2 * sqrt(x_" + to_string(i) + "^2 + x_" + to_string(i+1) + "^2))";
+    }
+    
+    for(int i = 0; i < 3; ++i) {
+        
+        sum_2 += " + abs(x_" + to_string(i) + ")^(0.8) + 5 * sin(x_" + to_string(i) + "^3)";
+    }
+    
+    const string f1 = sum_1;
+    const string f2 = sum_2;
+    
+    cout << f1 << endl;
+    cout << f2 << endl;
+    
+    p->Population_Set_Goal_Function(f1);
+    p->Population_Set_Goal_Function(f2);
+    
+    p->Population_Initialization( numeric_limits<double>::min(), numeric_limits<double>::max() );
+    
+    for(int i = 0; i < 3; ++i) {
+        
+        p->Population_Set_Search_Domain(-5, 5);
+    }
+}
+
+// --------------------------------------------------------------------
+
 
 #endif /* Test_Functions_h */

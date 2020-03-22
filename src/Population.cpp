@@ -62,6 +62,11 @@ void Individual_Genotypes_Decoding(Individual *i1, vector<VARIABLE_TYPE> search_
             return;
         }
         
+        if( isnan(d) ) {
+            
+            d = 0;
+        }
+        
         i1->Fenotypes.push_back(d);
     }
 }
@@ -78,6 +83,7 @@ void Individual_Fenotypes_Coding(Individual *i1) {
     for (int i = 0; i < i1->Fenotypes.size(); ++i) {
         
         d = i1->Fenotypes[i];
+        
         s = bitset<sizeof d * 8>( *(long unsigned int*)(&d) ).to_string();
         i1->Genotypes.push_back(s);
     }
@@ -263,6 +269,9 @@ void Population::Population_Initialization(int min, int max) {
         
         Individual I_Temp = Individual_Initialization(0);
         
+        string Genotype_Rand;
+        
+        
         for (int j = 0; j < Work_Size; j++) {
             
             VARIABLE_TYPE Fenotype_Rand = (rand() % max) + min;
@@ -345,14 +354,28 @@ Population Population::Population_Crossing() {
     
     for(int i = 0; i < Population_Size / 2; ++i) {
         
-        int Temp_Rand_1 = rand() % Individuals.size() / 2;
-        int Temp_Rand_2 = rand() % Individuals.size() / 2;
+        int Temp_Rand_1 = 0;
+        int Temp_Rand_2 = 0;
+        
+        while( Temp_Rand_1 == Temp_Rand_2 ) {
+            
+            Temp_Rand_1 = rand() % Individuals.size();
+            Temp_Rand_2 = rand() % Individuals.size();
+        }
         
         Individual Temp_i = Individuals[Temp_Rand_1];
-        Individuals.erase(Individuals.begin() + Temp_Rand_1);
-        
         Individual Temp_j = Individuals[Temp_Rand_2];
-        Individuals.erase(Individuals.begin() + Temp_Rand_2);
+        
+        if( Temp_Rand_1 > Temp_Rand_2 ) {
+            
+            Individuals.erase(Individuals.begin() + Temp_Rand_1);
+            Individuals.erase(Individuals.begin() + Temp_Rand_2);
+        }
+        else {
+         
+            Individuals.erase(Individuals.begin() + Temp_Rand_2);
+            Individuals.erase(Individuals.begin() + Temp_Rand_1);
+        }
         
         Individual *Individual_Childs =  new Individual[2];
         Individual_Childs = Individual_Crossing(Temp_i, Temp_j, Crossing_Probability, Search_Domain_MIN, Search_Domain_MAX);
@@ -401,30 +424,41 @@ Population Population::Population_Selection() {
     New_Population.Search_Domain_MIN     = Search_Domain_MIN;
     New_Population.Search_Domain_MAX     = Search_Domain_MAX;
     
-    Individual *arr = new Individual[Individuals.size()];
-    Individual I_Temp;
-
-    for(int i = 0; i < Population_Size; ++i) {
+    New_Population.Population_Clear();
+    
+    double Population_Fitness = 0;
+    
+    for(int i = 0; i < Individuals.size(); ++i) {
         
-        arr[i] = Individuals[i];
+        Population_Fitness += Individuals[i].Fitness;
     }
     
-    for(int i = 0; i < Population_Size; i++) {
+    Population_Fitness /= Individuals.size();
+    
+    for(int i = 0; i < Individuals.size(); ++i) {
         
-        for(int j = i + 1; j < Population_Size; j++) {
+        double Fitness = Individuals[i].Fitness;
+        Individuals[i].Drawn_Probability = 1 - (Fitness / Population_Fitness);
+    }
+    
+    while( New_Population.Individuals.size() < Individuals.size() ) {
+        
+        double Probability = rand() % 1000;
+        Probability /= 1000;
+        
+        int i = rand() % Individuals.size();
+        
+        if( isnan(Individuals[i].Drawn_Probability) ) Individuals[i].Drawn_Probability = 0;
+        
+        if( Probability <= Individuals[i].Drawn_Probability ) {
             
-            if(arr[i].Fitness > arr[j].Fitness) {
-                
-                I_Temp = arr[i];
-                arr[i] = arr[j];
-                arr[j] = I_Temp;
-            }
+            New_Population.Individuals.push_back( Individuals[i] );
         }
-    
-        New_Population.Individuals.push_back(arr[i]);
+        else {
+            
+            //cout << Probability << " <= " << Individuals[i].Drawn_Probability << endl;
+        }
     }
-    
-    delete [] arr;
     
     return New_Population;
 }
@@ -524,7 +558,7 @@ void Population::Population_Save_To_File(string file_name) {
             
             data += to_string(i) + "\t";
             
-            for(int j = 0; j < Goal_Functions_Number; ++j) {
+            for(int j = 0; j < Individuals[i].Goals.size(); ++j) {
                 
                 data += to_string( Individuals[i].Goals[j] ) + "\t";
             }
