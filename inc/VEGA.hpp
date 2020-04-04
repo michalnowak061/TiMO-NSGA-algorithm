@@ -12,6 +12,35 @@
 #include <stdio.h>
 #include "Population.hpp"
 
-Population VEGA_Algorithm(Population P0, int T);
+using namespace std;
+
+// --------------------------------------------------------------------
+
+class VEGA {
+    
+private:
+    
+    Population VEGA_P0;
+    Population VEGA_Pt;
+    
+    Population VEGA_Fitness_And_Selection(Population P);
+    
+protected:
+    
+public:
+    
+    VEGA();
+    ~VEGA();
+    
+    void VEGA_Set_Population0(Population P0);
+    
+    void VEGA_Algorithm();
+    
+    Population VEGA_Get_Actual_Population();
+    Population VEGA_Get_NonDom();
+    Population VEGA_Get_Dom();
+};
+
+// --------------------------------------------------------------------
 
 #endif /* VEGA_hpp */

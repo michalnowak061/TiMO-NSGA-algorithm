@@ -14,11 +14,11 @@ Math_Parser Parser;
 
 // --------------------------------------------------------------------
 
-Individual Individual_Initialization(VARIABLE_TYPE fitness) {
+Individual Individual_Initialization() {
     
     Individual I;
     
-    I.Fitness = fitness;
+    I.Fitness = 0;
     
     return I;
 }
@@ -64,7 +64,7 @@ void Individual_Genotypes_Decoding(Individual *i1, vector<VARIABLE_TYPE> search_
         
         if( isnan(d) ) {
             
-            d = 0;
+            d = min;
         }
         
         i1->Fenotypes.push_back(d);
@@ -94,8 +94,8 @@ void Individual_Fenotypes_Coding(Individual *i1) {
 Individual *Individual_Crossing(Individual i1, Individual i2, int c_probability, vector<VARIABLE_TYPE> search_domain_min, vector<VARIABLE_TYPE> search_domain_max) {
     
     Individual *New_I = new Individual[2];
-    New_I[0] = Individual_Initialization(0);
-    New_I[1] = Individual_Initialization(0);
+    New_I[0] = Individual_Initialization();
+    New_I[1] = Individual_Initialization();
     
     string Genotype1_Temp;
     string Genotype2_Temp;
@@ -161,7 +161,7 @@ Individual *Individual_Crossing(Individual i1, Individual i2, int c_probability,
 
 Individual Individual_Mutation(Individual i1, int m_probability, vector<VARIABLE_TYPE> search_domain_min, vector<VARIABLE_TYPE> search_domain_max) {
     
-    Individual New_I = Individual_Initialization(0);
+    Individual New_I = Individual_Initialization();
     string Genotype_Temp;
     string temp = Genotype_Temp;
     
@@ -175,7 +175,7 @@ Individual Individual_Mutation(Individual i1, int m_probability, vector<VARIABLE
         
         int Rand_Temp = rand() % 100;
         
-        if(Rand_Temp < m_probability) {
+        if(Rand_Temp <= m_probability) {
             
             if(Genotype_Temp[i] == '0') temp[i] = '1';
             else temp[i] = '0';
@@ -223,32 +223,22 @@ VARIABLE_TYPE Individual_Adaptation(Individual i1, string adaptation_function) {
 // --------------------------------------------------------------------
 
 bool operator >= (Individual i1, Individual i2) {
-
-    for(int i = 0; i < i1.Goals.size() && i < i2.Goals.size(); ++i){
-     
+    
+    for(int i = 0; i < i1.Goals.size() && i < i2.Goals.size(); ++i) {
+        
         if( i1.Goals[i] < i2.Goals[i] ) {
             
             return false;
         }
     }
-    
+
     return true;
 }
 
 // --------------------------------------------------------------------
 
-Population::Population(int work_size,
-                       int population_size,
-                       int crossing_probability,
-                       int mutation_probability) {
-    
-    Work_Size = work_size;
-    Population_Size = population_size;
-    
-    Crossing_Probability = crossing_probability;
-    Mutation_Probability = mutation_probability;
-    
-    Goal_Functions_Number = 0;
+Population::Population() {
+
 }
 
 // --------------------------------------------------------------------
@@ -265,17 +255,19 @@ Population::~Population() {
 
 void Population::Population_Initialization(int min, int max) {
     
+    min *= 10000;
+    max *= 10000;
+    
     for(int i = 0; i < Population_Size; ++i) {
         
-        Individual I_Temp = Individual_Initialization(0);
+        Individual I_Temp = Individual_Initialization();
         
         string Genotype_Rand;
-        
         
         for (int j = 0; j < Work_Size; j++) {
             
             VARIABLE_TYPE Fenotype_Rand = (rand() % max) + min;
-            I_Temp.Fenotypes.push_back(Fenotype_Rand);
+            I_Temp.Fenotypes.push_back(Fenotype_Rand / 10000);
         }
         
         Individual_Fenotypes_Coding(&I_Temp);
@@ -296,14 +288,13 @@ void Population::Population_Set_Search_Domain(VARIABLE_TYPE min, VARIABLE_TYPE m
 void Population::Population_Set_Goal_Function(string goal_function) {
     
     Goal_Functions.push_back(goal_function);
-    Goal_Functions_Number++;
 }
 
 // --------------------------------------------------------------------
 
 string Population::Population_Get_Goal_Function(int index) {
     
-    if(index < Goal_Functions_Number) {
+    if( index < Goal_Functions.size() ) {
         
         return Goal_Functions[index];
     }
@@ -329,13 +320,6 @@ Individual Population::Population_Get_Individual(int index) {
 
 // --------------------------------------------------------------------
 
-void Population::Population_Set_Adaptation(VARIABLE_TYPE adaptation, int index) {
-    
-    Individuals[index].Goals.push_back(adaptation);
-}
-
-// --------------------------------------------------------------------
-
 void Population::Population_Set_Fitness(VARIABLE_TYPE fitness, int index) {
     
     Individuals[index].Fitness = fitness;
@@ -343,17 +327,39 @@ void Population::Population_Set_Fitness(VARIABLE_TYPE fitness, int index) {
 
 // --------------------------------------------------------------------
 
-Population Population::Population_Crossing() {
+void Population::Population_Adaptation_Update() {
     
-    Population New_Population(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
+    for(int i = 0; i < Individuals.size(); ++i) {
+            
+        Individual I_Temp = Individuals[i];
+        
+        Individuals[i].Goals.clear();
+        
+        for(int j = 0; j < Goal_Functions.size(); ++j) {
+
+            string Goal_Function_Temp = Goal_Functions[j];
+            
+            VARIABLE_TYPE adaptation = Individual_Adaptation(I_Temp, Goal_Function_Temp);
+            Individuals[i].Goals.push_back(adaptation);
+        }
+    }
+}
+
+// --------------------------------------------------------------------
+
+Population Population::Population_Recombination() {
     
+    Population New_Population;
+    New_Population.Population_Set_Parameters(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
     New_Population.Goal_Functions        = Goal_Functions;
-    New_Population.Goal_Functions_Number = Goal_Functions_Number;
     New_Population.Search_Domain_MIN     = Search_Domain_MIN;
     New_Population.Search_Domain_MAX     = Search_Domain_MAX;
     
-    for(int i = 0; i < Population_Size / 2; ++i) {
+    int PSize = (int)Individuals.size();
+    
+    for(int i = 0; i < PSize / 2; ++i) {
         
+        // Step 1: Crossover
         int Temp_Rand_1 = 0;
         int Temp_Rand_2 = 0;
         
@@ -382,6 +388,11 @@ Population Population::Population_Crossing() {
         Individual Temp_k = Individual_Childs[0];
         Individual Temp_l = Individual_Childs[1];
         
+        // Step 2: Mutation
+        Temp_k = Individual_Mutation(Temp_k, Mutation_Probability, Search_Domain_MIN, Search_Domain_MAX);
+        Temp_l = Individual_Mutation(Temp_l, Mutation_Probability, Search_Domain_MIN, Search_Domain_MAX);
+        
+        // Step 3: Add childs to new population
         New_Population.Individuals.push_back(Temp_k);
         New_Population.Individuals.push_back(Temp_l);
         
@@ -393,21 +404,52 @@ Population Population::Population_Crossing() {
 
 // --------------------------------------------------------------------
 
-Population Population::Population_Mutation() {
+Population Population::Population_Tournament_Selection(bool maximum, int T_Size) {
     
-    Population New_Population(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
-    
+    Population New_Population;
+    New_Population.Population_Set_Parameters(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
     New_Population.Goal_Functions        = Goal_Functions;
-    New_Population.Goal_Functions_Number = Goal_Functions_Number;
     New_Population.Search_Domain_MIN     = Search_Domain_MIN;
     New_Population.Search_Domain_MAX     = Search_Domain_MAX;
     
-    for(int i = 0; i < Population_Size; ++i) {
+    New_Population.Population_Clear();
+    
+    vector<Individual> Tournament_group;
+    Individual I_The_Best = Individual_Initialization();
+    
+    for(int i = 0; i < Population_Get_Size(); ++i) {
         
-        Individual I_Temp = Individuals[i];
+        Tournament_group.clear();
         
-        I_Temp = Individual_Mutation(I_Temp, Mutation_Probability, Search_Domain_MIN, Search_Domain_MAX);
-        New_Population.Individuals.push_back(I_Temp);
+        for(int j = 0; j < T_Size; ++j) {
+            
+            int i = rand() % Population_Get_Size();
+            
+            Tournament_group.push_back( Individuals[i] );
+        }
+        
+        if( maximum ) {
+            
+            I_The_Best.Fitness = numeric_limits<VARIABLE_TYPE>::min();
+        }
+        else{
+            
+            I_The_Best.Fitness = numeric_limits<VARIABLE_TYPE>::max();
+        }
+        
+        for(int k = 0; k < Tournament_group.size(); ++k ) {
+            
+            if( Tournament_group[k].Fitness >= I_The_Best.Fitness && maximum == true ) {
+                
+                I_The_Best = Tournament_group[k];
+            }
+            else if( Tournament_group[k].Fitness <= I_The_Best.Fitness && maximum == false ) {
+                
+                I_The_Best = Tournament_group[k];
+            }
+        }
+        
+        New_Population.Population_Set_Individual( I_The_Best );
     }
     
     return New_Population;
@@ -415,12 +457,11 @@ Population Population::Population_Mutation() {
 
 // --------------------------------------------------------------------
 
-Population Population::Population_Selection() {
+Population Population::Population_Roulette_Selection(bool maximum) {
     
-    Population New_Population(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
-    
+    Population New_Population;
+    New_Population.Population_Set_Parameters(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
     New_Population.Goal_Functions        = Goal_Functions;
-    New_Population.Goal_Functions_Number = Goal_Functions_Number;
     New_Population.Search_Domain_MIN     = Search_Domain_MIN;
     New_Population.Search_Domain_MAX     = Search_Domain_MAX;
     
@@ -433,18 +474,27 @@ Population Population::Population_Selection() {
         Population_Fitness += Individuals[i].Fitness;
     }
     
-    Population_Fitness /= Individuals.size();
-    
-    for(int i = 0; i < Individuals.size(); ++i) {
+    if( maximum ) {
         
-        double Fitness = Individuals[i].Fitness;
-        Individuals[i].Drawn_Probability = 1 - (Fitness / Population_Fitness);
+        for(int i = 0; i < Individuals.size(); ++i) {
+            
+            double Fitness = Individuals[i].Fitness;
+            Individuals[i].Drawn_Probability = (Fitness / Population_Fitness) * 100;
+        }
+    }
+    else {
+        
+        for(int i = 0; i < Individuals.size(); ++i) {
+            
+            double Fitness = Individuals[i].Fitness;
+            Individuals[i].Drawn_Probability = 100 - ( (Fitness / Population_Fitness) * 100 );
+        }
     }
     
     while( New_Population.Individuals.size() < Individuals.size() ) {
         
         double Probability = rand() % 1000;
-        Probability /= 1000;
+        Probability /= 10;
         
         int i = rand() % Individuals.size();
         
@@ -454,10 +504,6 @@ Population Population::Population_Selection() {
             
             New_Population.Individuals.push_back( Individuals[i] );
         }
-        else {
-            
-            //cout << Probability << " <= " << Individuals[i].Drawn_Probability << endl;
-        }
     }
     
     return New_Population;
@@ -465,74 +511,48 @@ Population Population::Population_Selection() {
 
 // --------------------------------------------------------------------
 
-Population Population::Population_Get_Non_Dominated() {
+Population Population::Population_Delete_Return_NonDom() {
     
-    // Variables:
-    Population Non_Dominated(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
-    
+    Population Non_Dominated;
+    Non_Dominated.Population_Set_Parameters(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
     Non_Dominated.Goal_Functions        = Goal_Functions;
-    Non_Dominated.Goal_Functions_Number = Goal_Functions_Number;
     Non_Dominated.Search_Domain_MIN     = Search_Domain_MIN;
     Non_Dominated.Search_Domain_MAX     = Search_Domain_MAX;
     
-    Non_Dominated.Individuals = Individuals;
+    Non_Dominated.Population_Clear();
     
-    // Step 1:
-    for(int i = 0; i < Non_Dominated.Individuals.size(); ++i) {
+    vector<Individual> Dom_Individuals;
+    
+    for(int i = 0; i < Individuals.size(); ++i) {
         
-        Individual I_Temp1 = Non_Dominated.Individuals[i];
+        Individual I_Temp = Individuals[i];
         
-        for(int j = i - 1; j < Non_Dominated.Individuals.size(); ++j) {
+        bool isNonDom = true;
+        
+        for(int j = i; j < Individuals.size(); ++j) {
             
-            Individual I_Temp2 = Non_Dominated.Individuals[j];
+            Individual J_Temp = Individuals[j];
             
-            if( I_Temp2 >= I_Temp1 ) {
+            if( i != j && I_Temp >= J_Temp ) {
                 
-                Non_Dominated.Individuals.erase(Non_Dominated.Individuals.begin() + j);
+                isNonDom = false;
+                break;
             }
         }
+        
+        if( isNonDom ) {
+            
+            Non_Dominated.Population_Set_Individual( I_Temp );
+        }
+        else {
+            
+            Dom_Individuals.push_back( I_Temp );
+        }
     }
+    
+    Individuals = Dom_Individuals;
     
     return Non_Dominated;
-}
-
-// --------------------------------------------------------------------
-
-Population Population::Population_Get_Dominated() {
-    
-    // Variables:
-    Population Dominated(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
-    Dominated.Goal_Functions        = Goal_Functions;
-    Dominated.Goal_Functions_Number = Goal_Functions_Number;
-    Dominated.Search_Domain_MIN     = Search_Domain_MIN;
-    Dominated.Search_Domain_MAX     = Search_Domain_MAX;
-    
-    Population Temp(Work_Size, Population_Size, Crossing_Probability, Mutation_Probability);
-    Temp.Goal_Functions        = Goal_Functions;
-    Temp.Goal_Functions_Number = Goal_Functions_Number;
-    Temp.Search_Domain_MIN     = Search_Domain_MIN;
-    Temp.Search_Domain_MAX     = Search_Domain_MAX;
-    
-    Temp.Individuals = Individuals;
-    
-    // Step 1:
-    for(int i = 0; i < Temp.Individuals.size(); ++i) {
-        
-        Individual I_Temp1 = Temp.Individuals[i];
-        
-        for(int j = i - 1; j < Temp.Individuals.size(); ++j) {
-            
-            Individual I_Temp2 = Temp.Individuals[j];
-            
-            if( I_Temp2 >= I_Temp1 ) {
-                
-                Temp.Individuals.erase(Temp.Individuals.begin() + j);
-                Dominated.Individuals.push_back(I_Temp2);
-            }
-        }
-    }
-    
-    return Dominated;
 }
 
 // --------------------------------------------------------------------
@@ -545,7 +565,7 @@ void Population::Population_Save_To_File(string file_name) {
         
         file << "T \t";
         
-        for(int i = 0; i < Goal_Functions_Number; ++i) {
+        for(int i = 0; i < Goal_Functions.size(); ++i) {
             
             file << "f(x)_" + to_string(i) + "\t";
         }
@@ -605,7 +625,7 @@ void Population::Population_Print() {
             cout << "f(x)_" + to_string(k) << "[" << Goal_Functions[k] << "]" << ": " << Individuals[i].Goals[k] << endl;
         }
         
-        cout << "Wsk.Przystosowania: " << Individuals[i].Fitness << endl;
+        cout << "Fitness: " << Individuals[i].Fitness << endl;
         
         cout << "-----------------------------------------------------------------------------------------" << endl;
     }

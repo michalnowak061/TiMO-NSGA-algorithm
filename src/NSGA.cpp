@@ -8,15 +8,37 @@
 
 #include "NSGA.hpp"
 
-double NSGA_Split_Function(double alpha, double q_share, Individual ii, Individual jj) {
+// --------------------------------------------------------------------
+
+NSGA::NSGA() {
+    
+}
+
+// --------------------------------------------------------------------
+
+NSGA::~NSGA() {
+    
+}
+
+// --------------------------------------------------------------------
+
+void NSGA::NSGA_Set_Population0(Population P0) {
+    
+    NSGA_P0 = P0;
+    NSGA_Pt = P0;
+}
+
+// --------------------------------------------------------------------
+
+double NSGA::NSGA_Split_Function(double alpha, double q_share, Individual ii, Individual jj) {
     
     double d_ij = 0;
     double sd_ij = 0;
     
     // Step 1:
-    for(int i = 0; i < ii.Fenotypes.size() && i < jj.Fenotypes.size(); ++i) {
+    for(int i = 0; i < ii.Goals.size(); ++i) {
         
-        d_ij += pow( ( jj.Fenotypes[i] - ii.Fenotypes[i] ), 2);
+        d_ij += pow( ( jj.Goals[i] - ii.Goals[i] ), 2);
     }
     
     d_ij = sqrt( d_ij );
@@ -31,85 +53,111 @@ double NSGA_Split_Function(double alpha, double q_share, Individual ii, Individu
         sd_ij = 0;
     }
     
-    cout << sd_ij << endl;
-    
     return sd_ij;
 }
 
-Population NSGA_Fitness(Population p) {
+// --------------------------------------------------------------------
+
+void NSGA::NSGA_Fitness_Scharing(Population *p, double Fd) {
     
-    Population New_Population = p;
-    
-    
-    
-    return New_Population;
+    for(int i = 0; i < p->Population_Get_Size(); ++i) {
+        
+        Individual I_Temp = p->Population_Get_Individual(i);
+        
+        double Distance_Sum = 0;
+        
+        for(int j = 0; j < p->Population_Get_Size(); ++j) {
+            
+            Individual J_Temp = p->Population_Get_Individual(j);
+            
+            if( i != j ) {
+                
+                Distance_Sum += NSGA_Split_Function(1, 0.5, I_Temp, J_Temp);
+            }
+        }
+        
+        double Fitness = Distance_Sum != 0 ? (Fd / Distance_Sum) : Fd;
+        
+        p->Population_Set_Fitness(Fitness, i);
+    }
 }
 
-Population NSGA_Algorithm(Population P0, int T) {
+// --------------------------------------------------------------------
+
+Population NSGA::NSGA_NonDominated_Sorting(Population P) {
     
-    // Step 1: Inititalization
-    Population Pt = P0;
-    Population P1 = P0;
-    Population P2 = P0;
-    Population P3 = P0;
+    Population P_sorted = P;
+    P_sorted.Population_Clear();
     
-    int t = 0;
+    Population P_remain = P;
+    Population P_nondom = P;
+    double Fd = P.Population_Get_Size();
     
-    while(1) {
-        
-        // Step 2: Adaptation
-        Pt = NSGA_Fitness(Pt);
-        
-        // Step 3: Selection
-        P1 = Pt.Population_Selection();
-        
-        if(t > T) break;
-        
-        // Step 4: Crossing
-        P2 = P1.Population_Crossing();
-        
-        // Step 5: Mutation
-        P3 = P2.Population_Mutation();
-        
-        Pt = P3;
-        
-        cout << (double(t++) / double(T)) * 100 << " %"<<endl;
-    }
+    P_remain.Population_Adaptation_Update();
     
-    // Step 6: End
-    Population A_nondom = P1.Population_Get_Non_Dominated();
-    Population A_dom    = P1.Population_Get_Dominated();
-    
-    for(int i = 0; i < A_nondom.Population_Get_Population_Size(); ++i) {
+    while( P_remain.Population_Get_Size() != 0 ) {
         
-        for(int j = 0; j < A_nondom.Goal_Functions_Number; ++j) {
+        P_nondom = P_remain.Population_Delete_Return_NonDom();
+        
+        NSGA_Fitness_Scharing(&P_nondom, Fd);
+        
+        Fd = 0.9 * P_nondom.Population_Get_Min_Fitness();
+        
+        for(int i = 0; i < P_nondom.Population_Get_Size(); ++i) {
             
-            Individual I_Temp = A_nondom.Population_Get_Individual(i);
-            string Goal_Function_Temp = A_nondom.Population_Get_Goal_Function(j);
-            
-            VARIABLE_TYPE adaptation = Individual_Adaptation(I_Temp, Goal_Function_Temp);
-            A_nondom.Population_Set_Adaptation(adaptation, i);
+            P_sorted.Population_Set_Individual( P_nondom.Population_Get_Individual(i) );
         }
     }
     
-    for(int i = 0; i < A_dom.Population_Get_Population_Size(); ++i) {
-        
-        for(int j = 0; j < A_dom.Goal_Functions_Number; ++j) {
-            
-            Individual I_Temp = A_dom.Population_Get_Individual(i);
-            string Goal_Function_Temp = A_dom.Population_Get_Goal_Function(j);
-            
-            VARIABLE_TYPE adaptation = Individual_Adaptation(I_Temp, Goal_Function_Temp);
-            A_dom.Population_Set_Adaptation(adaptation, i);
-        }
-    }
-    
-    A_nondom.Population_Save_To_File("NSGA_Nondom");
-    A_dom.Population_Save_To_File("NSGA_Dom");
-    
-    A_nondom.Population_Print();
-    
-    //P1.Population_Print();
-    
-    return A_nondom;
+    return P_sorted;
 }
+
+// --------------------------------------------------------------------
+
+void NSGA::NSGA_Algorithm() {
+    
+    // Step 1: Crossing and Mutation
+    NSGA_Pt = NSGA_Pt.Population_Recombination();
+    
+    // Step 2: Adaptation
+    NSGA_Pt = NSGA_NonDominated_Sorting(NSGA_Pt);
+    
+    // Step 3: Selection
+    //Pt = Pt.Population_Roulette_Selection( true );
+    NSGA_Pt = NSGA_Pt.Population_Tournament_Selection(true, 10);
+}
+
+// --------------------------------------------------------------------
+
+Population NSGA::NSGA_Get_Actual_Population() {
+    
+    return NSGA_Pt;
+}
+
+// --------------------------------------------------------------------
+
+Population NSGA::NSGA_Get_NonDom() {
+    
+    Population P_Temp1 = NSGA_Pt;
+    
+    P_Temp1.Population_Adaptation_Update();
+    
+    Population P_Temp2 = P_Temp1.Population_Delete_Return_NonDom();
+    
+    return P_Temp2;
+}
+
+// --------------------------------------------------------------------
+
+Population NSGA::NSGA_Get_Dom() {
+    
+    Population P_Temp = NSGA_Pt;
+    
+    P_Temp.Population_Adaptation_Update();
+    
+    P_Temp.Population_Delete_Return_NonDom();
+    
+    return P_Temp;
+}
+
+// --------------------------------------------------------------------

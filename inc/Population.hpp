@@ -31,7 +31,7 @@ typedef struct {
     
 } Individual;
 
-Individual Individual_Initialization(VARIABLE_TYPE fitness);
+Individual Individual_Initialization();
 
 void Individual_Genotypes_Decoding(Individual *i1, vector<VARIABLE_TYPE> search_domain_min, vector<VARIABLE_TYPE> search_domain_max);
 void Individual_Fenotypes_Coding(Individual *i1);
@@ -41,7 +41,10 @@ Individual  Individual_Mutation(Individual i1, int m_probability, vector<VARIABL
 
 VARIABLE_TYPE Individual_Adaptation(Individual i1, string adaptation_function);
 
-bool operator <= (const Individual i1, const Individual i2);
+bool operator >= (const Individual i1, const Individual i2);
+bool operator < (Individual i1, Individual i2);
+
+bool Individual_Dominates(Individual individualToCheck, Individual individual);
 
 // --------------------------------------------------------------------
 
@@ -50,7 +53,17 @@ class Population {
 private:
     
     // Private variables
+    int Work_Size;
+    int Population_Size;
+    
+    int Crossing_Probability;
+    int Mutation_Probability;
+    
     vector<Individual> Individuals;
+    vector<Individual> NonDom_Individuals;
+    vector<Individual> Dom_Individuals;
+    
+    vector<string> Goal_Functions;
     
     vector<VARIABLE_TYPE> Search_Domain_MIN;
     vector<VARIABLE_TYPE> Search_Domain_MAX;
@@ -59,35 +72,33 @@ protected:
     
 public:
     
-    // Public variables
-    int Work_Size;
-    int Population_Size;
-    
-    int Crossing_Probability;
-    int Mutation_Probability;
-    
-    int Goal_Functions_Number;
-    vector<string> Goal_Functions;
-    
     // Public methods
-    Population(int Work_Size,
-                  int Population_Size,
-                  int Crossing_Probability,
-                  int Mutation_Probability);
-    
+    Population();
     ~Population();
+    
+    void Population_Set_Parameters(int work_size,
+                                   int population_size,
+                                   int crossing_probability,
+                                   int mutation_probability) {
+        
+        Work_Size = work_size;
+        Population_Size = population_size;
+        
+        Crossing_Probability = crossing_probability;
+        Mutation_Probability = mutation_probability;
+    }
     
     void Population_Initialization(int min, int max);
     
-    Population Population_Crossing();
-    Population Population_Mutation();
-    
-    Population Population_Selection();
+    Population Population_Roulette_Selection(bool maximum);
+    Population Population_Tournament_Selection(bool maximum, int T_Size);
     
     Population Population_Get_Non_Dominated();
     Population Population_Get_Dominated();
     
     void Population_Set_Search_Domain(VARIABLE_TYPE min, VARIABLE_TYPE max);
+    
+    void Population_Adaptation_Update();
     
     void Population_Set_Goal_Function(string goal_function);
     string Population_Get_Goal_Function(int index);
@@ -107,10 +118,39 @@ public:
         Individuals.clear();
     }
     
-    int Population_Get_Population_Size() {
+    int Population_Get_Size() {
         
         return (int)( Individuals.size() );
     }
+    
+    int Population_Get_Goal_Functions_Number() {
+        
+        return (int)( Goal_Functions.size() );
+    }
+    
+    VARIABLE_TYPE Population_Get_Min_Fitness() {
+        
+        VARIABLE_TYPE min = numeric_limits<VARIABLE_TYPE>::max();
+        
+        for(int i = 0; i < Individuals.size(); ++i) {
+            
+            if( Individuals[i].Fitness <= min ) {
+                
+                min = Individuals[i].Fitness;
+            }
+        }
+        
+        return min;
+    }
+    
+    void Population_Remove_Individual(int index) {
+        
+        Individuals.erase(Individuals.begin() + index);
+    }
+    
+    Population Population_Delete_Return_NonDom();
+    
+    Population Population_Recombination();
 };
 
 // --------------------------------------------------------------------
