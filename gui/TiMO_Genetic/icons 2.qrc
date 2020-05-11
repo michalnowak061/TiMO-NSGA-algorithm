@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/new/png">
-        <file>png/dna.png</file>
-    </qresource>
-</RCC>
